@@ -1,9 +1,8 @@
 import {} from "@shared/schema";
 import { Router, Request, Response } from "express";
-import fetch from "node-fetch";
 import { z } from "zod";
 
-const liveClockRouter: Router = Router();
+const liveClockRouter= Router();
 
 liveClockRouter.post("/", async (req: Request, res: Response) => {
 
@@ -48,4 +47,3 @@ liveClockRouter.post("/", async (req: Request, res: Response) => {
 });
 
 export default liveClockRouter;
-export { liveClockRouter };

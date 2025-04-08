@@ -22,23 +22,48 @@ const generateShortCode = (): string => {
   return shortCode;
 };
 
-shortUrlRouter.post("/", (req: Request, res: Response)=> {
+shortUrlRouter.post("/", (req: Request, res: Response) => {
   try {
-    console.log("Received body:", req.body);
-    const parsed = urlSchema.safeParse(req.body);
-    if (!parsed.success) {
-      console.error("Invalid URL format:", parsed.error);
-      return res.status(400).json({ error: "Invalid URL format" });
-    }
+    const parseResult = urlSchema.safeParse(req.body);
 
-    const { originalUrl } = parsed.data;
+    if (!parseResult.success) {
+      res.status(400).json({ error: "Invalid URL format" });
+    }
+    const { originalUrl } = parseResult.data!;
+
     const shortCode = generateShortCode();
-    mappingTable[shortCode] = { originalUrl, visits: 0 };
-    console.log("Updated mapping table:", mappingTable);
+
+    mappingTable[shortCode] = {
+      originalUrl,
+      visits: 0
+    };
+
     res.json({ shortCode });
   } catch (error) {
     console.error("Failed to generate short code:", error);
     res.status(500).json({ error: "Failed to generate short code" });
+  }
+});
+
+shortUrlRouter.get("/stats", (req: Request, res: Response) => {
+  try {
+    res.json(mappingTable);
+  } catch (error) {
+    console.error("Failed to parse mappingTable:", error);
+    res.status(500).json({ error: "Failed to parse mappingTable" });
+  }
+});
+
+shortUrlRouter.get("/", (req: Request, res: Response) => {
+  try {
+    const shortCode = req.query.shortCode as string;
+
+    mappingTable[shortCode].visits += 1;
+
+    res.redirect(mappingTable[shortCode].originalUrl);
+  } catch (error) {
+    console.error("Failed to redirect:", error);
+    res.status(500).json({ error: "Failed to redirect" });
   }
 });
 
