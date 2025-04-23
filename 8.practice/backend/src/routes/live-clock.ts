@@ -6,39 +6,34 @@ const liveClockRouter= Router();
 
 liveClockRouter.post("/", async (req: Request, res: Response) => {
 
-  const urlSchema = z.object({
-    url: z.string().url(),
-  });
+  try{
+  
+    const urlSchema = z.object({
+      url: z.string().url(),
+    });
 
-  const parsedUrl = urlSchema.safeParse(req.body);
+    const parsedUrl = urlSchema.safeParse(req.body);
 
-  if (!parsedUrl.success) {
-    res.status(400).json({ error: "Invalid URL format" });
-    return;
-  }
-
-  try {
-    const response = await fetch(parsedUrl.data.url, { method: "GET", redirect: "manual" });
-
-    if (!response.ok) {
-      res.status(response.status).json({ error: `Request failed with status ${response.status}` });
+    if (!parsedUrl.success) {
+      res.status(400).json({ error: "Invalid URL format" });
       return;
     }
 
-    const serverTime = response.headers.get("Date") || null;
+    const { url } = parsedUrl.data;
+
+
+    const response = await fetch(url, { method: "GET", redirect: "manual" });
+
+    const serverTime = response.headers.get("Date");
 
     const responseSchema = z.object({
       serverTime: z.string().nullable(),
     });
 
-    const validatedResponse = responseSchema.safeParse({ serverTime });
+    const validatedResponse = responseSchema.parse({ serverTime });
 
-    if (!validatedResponse.success) {
-      res.status(500).json({ error: "Invalid response format" });
-      return;
-    }
+    res.json(validatedResponse);
 
-    res.json(validatedResponse.data);
   } catch (error) {
 
     console.error("Fetch Error:", error);
